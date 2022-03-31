@@ -114,24 +114,18 @@ MoveContext.prototype.isLastFrom = function(params, ix) {
 }
   
 MoveContext.prototype.isEmpty = function() {
-    if (games.model.deferredCaptures) {
-        for (var i = 0; i < this.move.actions.length; i++) {
-             var a = this.move.actions[i];
-             if ((a[0] !== null) && (a[1] === null) && (a[0] == this.pos)) return false;
-        }
-    }
-    return this.getPiece(this.pos) === null;
+    return !this.getPiece(this.pos);
 }
   
 MoveContext.prototype.isEnemy = function() {
     var piece = this.getPiece(this.pos);
-    if (piece === null) return false;
+    if (!piece) return false;
     return piece.player != this.board.player;
 }
   
 MoveContext.prototype.isFriend = function() {
     var piece = this.getPiece(this.pos);
-    if (piece === null) return false;
+    if (!piece) return false;
     return piece.player == this.board.player;
 }
   
@@ -204,7 +198,7 @@ Move.prototype.copy = function() {
 Move.prototype.clone = function(part) {
     var r = new Move(this.mode);
     _.each(this.actions, function(a) {
-        if ((a[0] !== null) && (a[1] !== null) && (a[3] == part)) return;
+        if (a.from && a.to && (a.part == part)) return;
         r.actions.push(a);
     });
     return r;
@@ -214,13 +208,13 @@ Move.prototype.moveToString = function(design) {
     var r = ""; var p = null;
     for (var i = 0; i < this.actions.length; i++) {
          var a = this.actions[i];
-         if ((a[0] !== null) && (a[1] !== null)) {
-             if ((p === null) || (p != a[0])) {
+         if (a.from && a.to) {
+             if ((p === null) || (p != a.from)) {
                   if (r != "") r = r + " ";
-                  r = r + design.posToString(a[0]);
+                  r = r + design.posToString(a.from);
              }
-             r = r + "-" + design.posToString(a[1]);
-             p = a[1];
+             r = r + "-" + design.posToString(a.to);
+             p = a.to;
          }
     }
     return r;
@@ -232,42 +226,40 @@ Move.prototype.isPass = function() {
   
 Move.prototype.isDropMove = function() {
     if (this.actions.length != 1) return false;
-    return (this.actions[0][0] === null) && (this.actions[0][1] !== null) && (this.actions[0][2] !== null);
+    return this.actions[0].from && this.actions[0].to && this.actions[0].piece;
 }
   
 Move.prototype.isSimpleMove = function() {
     if (this.actions.length != 1) return false;
-    return (this.actions[0][0] !== null) && (this.actions[0][1] !== null);
+    return this.actions[0].from && this.actions[0].to !== null;
 }
  
 Move.prototype.movePiece = function(from, to, piece, part) {
     if (_.isUndefined(part)) part = 1;
-    this.actions.push([from, to, piece, part]);
+    this.actions.push({
+        from: from,
+        to: to,
+        piece: piece,
+        part: part
+    });
 }
   
 Move.prototype.capturePiece = function(from, part) {
     if (_.isUndefined(part)) part = 1;
-    this.actions.push([from, null, null, part]);
+    this.actions.push({
+        from: from,
+        part: part
+    });
 }
   
 Move.prototype.dropPiece = function(to, piece, part) {
     if (_.isUndefined(part)) part = 1;
-    this.actions.push([null, to, piece, part]);
-}
-
-Move.prototype.applyTo = function(obj) {
-    _.each(this.actions, function(a) {
-        if (a[0] !== null) {
-            obj.setPiece(a[0], null);
-        }
-        if ((a[1] !== null) && (a[2] !== null)) {
-            obj.setPiece(a[1], a[2]);
-        }
-        if ((a[0] !== null) && (a[1] !== null) && !_.isUndefined(obj.setLastFrom)) {
-            obj.setLastFrom(a[0]);
-        }
+    this.actions.push({
+        to: to,
+        piece: piece,
+        part: part
     });
 }
-  
+
 module.exports.createContext = createContext;
 module.exports.createMove = createMove;

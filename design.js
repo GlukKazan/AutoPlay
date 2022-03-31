@@ -51,7 +51,7 @@ Design.prototype.navigate = function(player, pos, dir) {
         dir = this.players[player][dir];
     }
     if (this.positions[pos][dir] != 0) {
-        return + pos + this.positions[pos][dir];
+        return +pos + this.positions[pos][dir];
     } else {
         return null;
     }

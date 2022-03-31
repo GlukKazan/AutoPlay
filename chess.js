@@ -1,14 +1,14 @@
 "use strict";
 
 const pieceAdj = [
-    [   0,    0,   0,   0,   0,   0,    0,    0, // Empty
-        0,    0,   0,   0,   0,   0,    0,    0, 
-        0,    0,   0,   0,   0,   0,    0,    0, 
-        0,    0,   0,   0,   0,   0,    0,    0, 
-        0,    0,   0,   0,   0,   0,    0,    0, 
-        0,    0,   0,   0,   0,   0,    0,    0, 
-        0,    0,   0,   0,   0,   0,    0,    0, 
-        0,    0,   0,   0,   0,   0,    0,    0 
+    [  63,   62,  61,  60,  59,  58,   57,   56, // Flip
+       55,   54,  53,  52,  51,  50,   49,   48, 
+       47,   46,  45,  44,  43,  42,   41,   40, 
+       39,   38,  37,  36,  35,  34,   33,   32, 
+       31,   30,  29,  28,  27,  26,   25,   24, 
+       23,   22,  21,  20,  19,  18,   17,   16, 
+       15,   14,  13,  12,  11,  10,    9,    8, 
+        7,    6,   5,   4,   3,   2,    1,    0 
     ], 
     [   0,    0,   0,   0,   0,   0,    0,    0, // Pawn
       -25,  105, 135, 270, 270, 135,  105,  -25,
@@ -74,7 +74,7 @@ let step = function(ctx, params) {
 let pawnShift = function(ctx, params) {
     if (ctx.go(params, 0) && ctx.isEmpty()) {
         if (ctx.inZone(0)) {
-            ctx.promote(4);
+            ctx.promote(5);
         }    
         ctx.end();
     }
@@ -83,7 +83,7 @@ let pawnShift = function(ctx, params) {
 let pawnLeap = function(ctx, params) {
     if (ctx.go(params, 0) && ctx.isEnemy()) {
         if (ctx.inZone(0)) {
-            ctx.promote(4);
+            ctx.promote(5);
         }    
         ctx.end();
     }

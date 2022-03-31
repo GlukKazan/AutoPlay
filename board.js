@@ -35,8 +35,8 @@ function create(design) {
     return new Board(design);
 }
 
-function Undo(player, baseEval, zLow, zHigh) {
-    this.player   = player;
+function Undo(turn, baseEval, zLow, zHigh) {
+    this.turn     = turn;
     this.baseEval = baseEval;
     this.zLow     = zLow;
     this.zHigh    = zHigh;
@@ -51,17 +51,66 @@ function Board(design) {
     this.zHigh    = 0;
     this.baseEval = 0;
     this.history  = [];
+    this.captured = [];
 }
   
-Board.prototype.applyAction = function(action) {
-    // TODO:
+Board.prototype.redoAction = function(action) {
+    if (action.to) {
+        this.captured.push(this.pieces[action.to]);
+    } else if (action.from) {
+        this.captured.push(this.pieces[action.from]);
+    }
+    if (action.from) {
+        const pos = action.from;
+        const piece = this.pieces[pos];
+        if (piece) {
+            this.zLow ^= z_low[pos][piece.type][piece.player];
+            this.zHigh ^= z_high[pos][piece.type][piece.player];
+            this.baseEval -= this.design.price[piece.type];
+            if (this.design.adj) {
+                let p = pos - 1;
+                if (this.player != 1) {
+                    p = this.design.adj[0][p];
+                }
+                this.baseEval -= this.design.adj[piece.type][p];
+            }
+        }
+        this.pieces[pos] = null;
+    }
+    if (action.to && action.piece) {
+        const pos = action.to;
+        this.zLow ^= z_low[pos][piece.type][piece.player];
+        this.zHigh ^= z_high[pos][piece.type][piece.player];
+        this.baseEval += this.design.price[piece.type];
+        if (this.design.adj) {
+            let p = pos - 1;
+            if (this.player != 1) {
+                p = this.design.adj[0][p];
+            }
+            this.baseEval += this.design.adj[piece.type][p];
+        }
+        this.pieces[pos] = action.piece;
+    }
+}
 
+Board.prototype.undoAction = function(action) {
+    if (action.to) {
+        if (this.captured.length == 0) return false;
+        if (action.from) {
+            this.pieces[action.from] = this.pieces[action.to];
+        }
+        this.pieces[action.to] = this.captured.pop();
+    } else if (action.from) {
+        if (this.captured.length == 0) return false;
+        this.pieces[action.from] = this.captured.pop();
+    } else return false;
+    return true;
 }
 
 Board.prototype.redoMove = function(move) {
-    this.history.push(new Undo(this.player, this.baseEval, this.zLow, this.zHigh));
+    this.history.push(new Undo(this.turn, this.baseEval, this.zLow, this.zHigh));
     for (let i = 0; i < move.actions.length; i++) {
-        this.applyAction(move.actions[i]);
+        this.redoAction(move.actions[i]);
     }
     this.zLow ^= z_player_low[this.player];
     this.zHigh ^= z_player_high[this.player];
@@ -72,9 +121,23 @@ Board.prototype.redoMove = function(move) {
     this.zHigh ^= z_player_high[this.player];
 }
 
-Board.prototype.applyMove = function(move) {
-    this.redoMove(move);
+Board.prototype.undoMove = function(move) {
+    if (this.history.length == 0) return false;
+    for (let i = move.actions.length; i >= 0; i--) {
+        if (!this.undoAction(move.actions[i])) return false;
+    }
+    const u = this.history.pop();
+    this.turn = u.turn;
+    this.player = design.currPlayer(this.turn);
+    this.zLow = u.zLow;
+    this.zHigh = u.zHigh;
+    this.baseEval = u.baseEval;
+    return true;
+}
+
+Board.prototype.clear = function() {
     this.history  = [];
+    this.captured = [];
 }
 
 Board.prototype.setLastFrom = function(pos) {
@@ -84,6 +147,17 @@ Board.prototype.setLastFrom = function(pos) {
 Board.prototype.isLastFrom = function(pos) {
     if (!_.isUndefined(this.lastFrom)) {
          return this.lastFrom == pos;
+    }
+    return false;
+}
+  
+Board.prototype.setLastTo = function(pos) {
+    this.lastTo = pos; 
+}
+  
+Board.prototype.isLastTo = function(pos) {
+    if (!_.isUndefined(this.lastTo)) {
+         return this.lastTo == pos;
     }
     return false;
 }
