@@ -174,12 +174,16 @@ function build(design) {
 
     let g = design.addGrid();
     g.addScale("a/b/c/d/e/f/g/h"); g.addScale("8/7/6/5/4/3/2/1");
-    g.addDirection("n",[ 0, -1]); g.addDirection("nw",[-1, -1]);
-    g.addDirection("e",[ 1,  0]); g.addDirection("ne",[ 1, -1]);
-    g.addDirection("w",[-1,  0]); g.addDirection("sw",[-1,  1]);
-    g.addDirection("s",[ 0,  1]); g.addDirection("se",[ 1,  1]);
-    design.addPlayer("White", [6, 7, 4, 5, 2, 3, 0, 1]);
-    design.addPlayer("Black", [6, 5, 2, 7, 4, 1, 0, 3]);
+    g.addDirection("n",[ 0, -1]);   // 0
+    g.addDirection("e",[ 1,  0]);   // 1
+    g.addDirection("w",[-1,  0]);   // 2
+    g.addDirection("s",[ 0,  1]);   // 3
+    g.addDirection("nw",[-1, -1]);  // 4
+    g.addDirection("ne",[ 1, -1]);  // 5
+    g.addDirection("sw",[-1,  1]);  // 6
+    g.addDirection("se",[ 1,  1]);  // 7
+    design.addPlayer("White", [3, 2, 1, 0, 7, 6, 5, 4]);
+    design.addPlayer("Black", [3, 1, 2, 0, 6, 7, 4, 5]);
     g.addPositions();
 
     design.addZone("last-rank", 1, ["a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8"]);
@@ -188,34 +192,34 @@ function build(design) {
     design.addZone("third-rank", 2, ["a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6"]);
 
     design.addPiece("Pawn", 1, 800);
-    design.addMove(1, pawnShift, [4], 0);
-    design.addMove(1, pawnJump, [4], 0);
-    design.addMove(1, pawnLeap, [7], 0);
-    design.addMove(1, pawnLeap, [3], 0);
-    design.addMove(1, enPassant, [1, 4], 0);
-    design.addMove(1, enPassant, [0, 4], 0);
+    design.addMove(1, pawnShift, [0], 0);
+    design.addMove(1, pawnJump, [0], 0);
+    design.addMove(1, pawnLeap, [4], 0);
+    design.addMove(1, pawnLeap, [5], 0);
+    design.addMove(1, enPassant, [1, 0], 0);
+    design.addMove(1, enPassant, [2, 0], 0);
 
     design.addPiece("Knight", 2, 3350);
-    design.addMove(2, jump, [4, 7], 0);
-    design.addMove(2, jump, [4, 3], 0);
-    design.addMove(2, jump, [2, 6], 0);
-    design.addMove(2, jump, [2, 5], 0);
-    design.addMove(2, jump, [0, 7], 0);
-    design.addMove(2, jump, [0, 6], 0);
-    design.addMove(2, jump, [1, 3], 0);
+    design.addMove(2, jump, [0, 4], 0);
+    design.addMove(2, jump, [0, 5], 0);
+    design.addMove(2, jump, [3, 6], 0);
+    design.addMove(2, jump, [3, 7], 0);
     design.addMove(2, jump, [1, 5], 0);
+    design.addMove(2, jump, [1, 7], 0);
+    design.addMove(2, jump, [2, 4], 0);
+    design.addMove(2, jump, [2, 6], 0);
 
     design.addPiece("Bishop", 3, 3450);
-    design.addMove(3, slide, [7], 0);
-    design.addMove(3, slide, [6], 0);
-    design.addMove(3, slide, [3], 0);
+    design.addMove(3, slide, [4], 0);
     design.addMove(3, slide, [5], 0);
+    design.addMove(3, slide, [6], 0);
+    design.addMove(3, slide, [7], 0);
 
     design.addPiece("Rook", 4, 5000);
-    design.addMove(4, slide, [4], 0);
-    design.addMove(4, slide, [2], 0);
     design.addMove(4, slide, [0], 0);
     design.addMove(4, slide, [1], 0);
+    design.addMove(4, slide, [2], 0);
+    design.addMove(4, slide, [3], 0);
 
     design.addPiece("Queen", 5, 9750);
     design.addMove(5, slide, [4], 0);
@@ -236,8 +240,8 @@ function build(design) {
     design.addMove(6, step, [6], 0);
     design.addMove(6, step, [3], 0);
     design.addMove(6, step, [5], 0);
-    design.addMove(6, O_O, [1, 0], 1);
-    design.addMove(6, O_O_O, [0, 1], 1);
+    design.addMove(6, O_O, [1, 2], 1);
+    design.addMove(6, O_O_O, [2, 1], 1);
 
     design.setAdj(pieceAdj);
 

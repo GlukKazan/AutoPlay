@@ -112,7 +112,18 @@ MoveContext.prototype.isLastFrom = function(params, ix) {
     }
     return this.board.isLastFrom(pos);
 }
-  
+
+MoveContext.prototype.isLastTo = function(params, ix) {
+    var pos = this.getParam(params, ix);
+    if (pos === null) {
+        pos = this.pos;
+    }
+    if ((this.parent !== null) && (this.parent.parent !== null)) {
+        if (pos == this.parent.parent.from) return true;
+    }
+    return this.board.isLastTo(pos);
+}
+
 MoveContext.prototype.isEmpty = function() {
     return !this.getPiece(this.pos);
 }

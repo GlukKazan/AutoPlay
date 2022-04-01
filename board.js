@@ -119,6 +119,9 @@ Board.prototype.redoMove = function(move) {
     this.baseEval = -this.baseEval;
     this.zLow ^= z_player_low[this.player];
     this.zHigh ^= z_player_high[this.player];
+    // TODO: Check Invariant and undo if necessary
+
+    return true;
 }
 
 Board.prototype.undoMove = function(move) {
@@ -138,6 +141,12 @@ Board.prototype.undoMove = function(move) {
 Board.prototype.clear = function() {
     this.history  = [];
     this.captured = [];
+}
+
+Board.prototype.isRepDraw = function() {
+    // TODO:
+
+    return false;
 }
 
 Board.prototype.setLastFrom = function(pos) {

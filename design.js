@@ -1,6 +1,7 @@
 "use strict";
 
 const _ = require('underscore');
+const m = require('./move');
 
 let design = null;
 
@@ -16,14 +17,51 @@ function Design() {
     this.dirs          = [];
     this.players       = [];
     this.playerNames   = [];
-    this.positions     = [null];
-    this.positionNames = [''];
+    this.positions     = [[]];
+    this.positionNames = ['dummy'];
     this.modes         = [];
     this.zones         = [];
     this.zoneNames     = [];
     this.pieces        = [];
     this.price         = [0];
     this.moves         = [];
+    this.initial       = [];
+}
+
+Design.prototype.getMoves = function(board) {
+    let r = [];
+    _.each(this.allPositions(), function(pos) {
+        const piece = this.getPiece(pos);
+        if (piece === null) return;
+        if (piece.player != this.player) return;
+        _.each(this.moves, function(move) {
+            if (m.type != piece.type) return;
+            let ctx = new TMoveContext(this, board, pos, piece);
+            ctx.move.mode = move.mode;
+            ctx.take(); ctx.setPiece(pos, null);
+            t.f(ctx, t.p);
+            if (ctx.succeed) {
+                r.push(ctx.move);
+            }
+        });
+    });
+    return r;
+}
+
+Design.prototype.getCaptureMoves = function(board) {
+    return _.filter(this.getMoves(), function(m) {
+        for (let i = 0; i < m.actions.length; i++) {
+            if (m.actions[i].from) {
+                if (!m.actions.to) return true;
+                if (board.getPiece(m.actions.to)) return true;
+            }
+        }
+        return false;
+    });
+}
+
+Design.prototype.evaluate = function(board) {
+    return board.baseEval;
 }
 
 Design.prototype.allDirections = function() {
@@ -31,11 +69,11 @@ Design.prototype.allDirections = function() {
 }
   
 Design.prototype.allPositions = function() {
-    return _.range(1, this.positions.length - 1);
+    return _.range(1, this.positions.length);
 }
 
 Design.prototype.allPlayers = function() {
-    return _.range(1, this.playerNames.length - 1);
+    return _.range(1, this.playerNames.length);
 }
 
 Design.prototype.getDirection = function(name) {
@@ -43,6 +81,13 @@ Design.prototype.getDirection = function(name) {
     if (dir < 0) {
         return null;
     }
+    return dir;
+}
+
+Design.prototype.findDirection = function(from, to) {
+    if (from >= this.positions.length) return null;
+    var dir = _.indexOf(this.positions[from], to - from);
+    if (dir < 0) return null;
     return dir;
 }
   
@@ -57,11 +102,8 @@ Design.prototype.navigate = function(player, pos, dir) {
     }
 }
   
-Design.prototype.opposite = function(dir, player) {
-    if (_.isUndefined(player)) {
-        player = 0;
-    }
-    return this.players[player][dir];
+Design.prototype.opposite = function(dir) {
+    return this.players[0][dir];
 }
 
 Design.prototype.getZone = function(name) {
@@ -87,24 +129,24 @@ Design.prototype.nextPlayer = function(player) {
     }
 }
   
-Design.prototype.nextTurn = function(board) {
-    var turn = board.turn + 1;
+Design.prototype.nextTurn = function(turn) {
+    var t = turn + 1;
     if (_.isUndefined(this.turns)) {
-        if (turn >= this.players.length - 1) {
-            turn = 0;
+        if (t >= this.players.length - 1) {
+            t = 0;
             if (!_.isUndefined(this.repeat)) {
-                turn += this.repeat;
+                t += this.repeat;
             }
         }
     } else {
-        if (turn >= this.turns.length) {
-            turn = 0;
+        if (t >= this.turns.length) {
+            t = 0;
             if (!_.isUndefined(this.repeat)) {
-                turn += this.repeat;
+                t += this.repeat;
             }
         }
     }
-    return turn;
+    return t;
 }
 
 Design.prototype.currPlayer = function(turn) {
@@ -136,6 +178,7 @@ Design.prototype.stringToPos = function(name) {
  
 Design.prototype.addDirection = function(name) {
     this.dirs.push(name);
+    this.positions[0].push(0);
 }
 
 Design.prototype.addPlayer = function(name, symmetry) {
@@ -168,10 +211,6 @@ Design.prototype.repeatMark = function() {
 }
   
 Design.prototype.addPosition = function(name, dirs) {
-   if ((this.positions.length == 0) && (name != "start")) {
-        this.positionNames.push("start");
-        this.positions.push(_.map(_.range(dirs.length), function(n) {return 0;}));
-   }
    this.positionNames.push(name);
    this.positions.push(dirs);
  }
@@ -211,11 +250,11 @@ Design.prototype.createPiece = function(type, player) {
   
 Design.prototype.addMove = function(type, fun, params, mode, sound) {
     this.moves.push({
-        t: type,
+        type: type,
         f: fun,
         p: params,
         s: sound,
-        m: mode
+        mode: mode
     });
 }
   
@@ -244,8 +283,8 @@ Design.prototype.setup = function(player, type, positions) {
            p: pos,
            t: piece
         });
-      }, this);
-  }
+    }, this);
+}
 
 function Piece(design, type, player) {
     this.design = design;
