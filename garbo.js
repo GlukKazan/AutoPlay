@@ -127,7 +127,7 @@ function AlphaBeta(design, board, ply, depth, alpha, beta) {
 
     for (let i = 0; i < moves.length; i++) {
         let currentMove = moves[i];
-        var plyToSearch = ply - 1;
+        let plyToSearch = ply - 1;
         if (!board.redoMove(currentMove)) continue;
         let value = AlphaBeta(design, board, plyToSearch, depth + 1, -beta, -alpha);
         moveMade = true;

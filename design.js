@@ -12,6 +12,10 @@ function create() {
     return design;
 }
 
+let invariant = function(board, moves) {
+    return moves;
+}
+
 function Design() {
     this.options       = [];
     this.dirs          = [];
@@ -26,6 +30,7 @@ function Design() {
     this.price         = [0];
     this.moves         = [];
     this.initial       = [];
+    this.invariant     = invariant;
 }
 
 Design.prototype.getMoves = function(board) {
@@ -45,7 +50,15 @@ Design.prototype.getMoves = function(board) {
             }
         });
     });
-    return r;
+    return this.invariant(board, r);
+}
+
+Design.prototype.addInvariant = function(fun) {
+    const call = this.invariant;
+    this.invariant = function(board, moves) {
+        const moves = fun(board, moves);
+        return call(board, moves);
+    }
 }
 
 Design.prototype.getCaptureMoves = function(board) {
@@ -77,7 +90,7 @@ Design.prototype.allPlayers = function() {
 }
 
 Design.prototype.getDirection = function(name) {
-    var dir = _.indexOf(this.dirs, name);
+    const dir = _.indexOf(this.dirs, name);
     if (dir < 0) {
         return null;
     }
@@ -86,7 +99,7 @@ Design.prototype.getDirection = function(name) {
 
 Design.prototype.findDirection = function(from, to) {
     if (from >= this.positions.length) return null;
-    var dir = _.indexOf(this.positions[from], to - from);
+    const dir = _.indexOf(this.positions[from], to - from);
     if (dir < 0) return null;
     return dir;
 }
@@ -107,7 +120,7 @@ Design.prototype.opposite = function(dir) {
 }
 
 Design.prototype.getZone = function(name) {
-    var zone = _.indexOf(this.zoneNames, name);
+    const zone = _.indexOf(this.zoneNames, name);
     if (zone < 0) return null;
     return zone;
 }
@@ -130,7 +143,7 @@ Design.prototype.nextPlayer = function(player) {
 }
   
 Design.prototype.nextTurn = function(turn) {
-    var t = turn + 1;
+    let t = turn + 1;
     if (_.isUndefined(this.turns)) {
         if (t >= this.players.length - 1) {
             t = 0;
@@ -171,7 +184,7 @@ Design.prototype.posToString = function(pos) {
 }
  
 Design.prototype.stringToPos = function(name) {
-    var pos = _.indexOf(this.positionNames, name);
+    const pos = _.indexOf(this.positionNames, name);
     if (pos < 0) return null;
     return pos;
 }
@@ -182,7 +195,7 @@ Design.prototype.addDirection = function(name) {
 }
 
 Design.prototype.addPlayer = function(name, symmetry) {
-    var ix = this.playerNames.length;
+    const ix = this.playerNames.length;
     if (this.playerNames.length == 0) {
         this.playerNames.push("opposite");
     }
@@ -216,7 +229,7 @@ Design.prototype.addPosition = function(name, dirs) {
  }
 
 Design.prototype.addZone = function(name, player, positions) {
-    var zone = _.indexOf(this.zoneNames, name);
+    const zone = _.indexOf(this.zoneNames, name);
     if (zone < 0) {
         zone = this.zoneNames.length;
         this.zoneNames.push(name);
@@ -239,7 +252,7 @@ Design.prototype.addPiece = function(name, type, price) {
 }
 
 Design.prototype.getPieceType = function(name) {
-    var r = _.indexOf(this.pieces, name);
+    const r = _.indexOf(this.pieces, name);
     if (r < 0) return null;
     return r;
 }
@@ -266,24 +279,11 @@ Design.prototype.setAdj = function(adj) {
     this.adj = adj;
 }
 
-Design.prototype.setup = function(player, type, positions) {
-    var t = _.indexOf(this.pieces, type);
-    var p = _.indexOf(this.playerNames, player);
-    if ((t < 0) || (p < 0)) return;
-    var piece = this.createPiece(t, p);
-    if (!_.isArray(positions)) {
-        positions = [positions];
-    }
-    _.chain(positions)
-     .map(function(name) {
-        return this.stringToPos(name);
-      }, this)
-     .each(function(pos) {
-        this.initial.push({
-           p: pos,
-           t: piece
-        });
-    }, this);
+Design.prototype.setup = function(width, height, setup, fen) {
+    this.width = width;
+    this.height = height;
+    this.setup = setup;
+    this.fen = fen;
 }
 
 function Piece(design, type, player) {
@@ -311,10 +311,10 @@ Piece.prototype.getValue = function(ix) {
 }
   
 Piece.prototype.setValue = function(ix, value) {
-    var v = this.getValue(ix);
+    const v = this.getValue(ix);
     if ((v === null) && (value === null)) return this;
     if ((v !== null) && (value !== null) && (v == value)) return this;
-    var r = new Piece(this.type, this.player);
+    let r = new Piece(this.type, this.player);
     if (_.isUndefined(r.values)) {
         r.values = [];
     }
@@ -355,25 +355,25 @@ Grid.prototype.addDirection = function(name, offsets) {
     if (_.indexOf(this.dirs, name) < 0) {
         this.design.addDirection(name);
     }
-    var ix = _.indexOf(this.design.dirs, name);
+    const ix = _.indexOf(this.design.dirs, name);
     if (ix >= 0) {
         this.dirs[ix] = offsets;
     }
 }
 
-var addPositions = function(self, ix, name, point) {
+function addPositions(self, ix, name, point) {
     if (ix < 0) {
-        var offsets = _.map(_.range(self.dirs.length), function(dir) {
+        const offsets = _.map(_.range(self.dirs.length), function(dir) {
             return 0;
         });
         _.each(_.keys(self.dirs), function(dir) {
-            var o = 0;
-            for (var c = self.scales.length - 1; c >= 0; c--) {
+            let o = 0;
+            for (let c = self.scales.length - 1; c >= 0; c--) {
                  if (c < self.scales.length - 1) {
                      o = o * self.scales[c].length;
                  }
-                 var v = self.dirs[dir][c];
-                 var x = point[c] + v;
+                 const v = self.dirs[dir][c];
+                 const x = point[c] + v;
                  if (x < 0) return;
                  if (x >= self.scales[c].length) return;
                  o += v;
@@ -383,7 +383,7 @@ var addPositions = function(self, ix, name, point) {
         self.design.addPosition(name, offsets);
         return;
     }
-    for (var i = 0; i < self.scales[ix].length; i++) {
+    for (let i = 0; i < self.scales[ix].length; i++) {
         point.unshift(i);
         addPositions(self, ix - 1, self.scales[ix][i] + name, point);
         point.shift();

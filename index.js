@@ -44,3 +44,6 @@ console.log('\n');*/
 //console.log(game.nextPlayer(2));
 //console.log(game.currPlayer(2));
 //console.log(game.nextTurn(1));
+
+// TODO: Check O_O generation
+// TODO: Check z for Black

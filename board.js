@@ -1,6 +1,7 @@
 "use strict";
 
 const z = require('./zobrist');
+const fen = require('./fen');
 
 let mt            = null;
 let z_low         = null;
@@ -27,7 +28,7 @@ function create(design) {
         }
         z_player_low  = new Array(design.playerNames.length);
         z_player_high = new Array(design.playerNames.length);
-        for (let player = 0; player < design.playerNames.length; player++) {
+        for (let player = 2; player <= design.playerNames.length; player++) {
             z_player_low[player]  = mt.next(32);
             z_player_high[player] = mt.next(32);
         }
@@ -52,6 +53,18 @@ function Board(design) {
     this.baseEval = 0;
     this.history  = [];
     this.captured = [];
+    if (design.setup) {
+        fen.set(design, this, design.setup);
+    }
+}
+
+Board.prototype.clear = function() {
+    this.pieces   = [];
+    this.zLow     = 0; 
+    this.zHigh    = 0;
+    this.baseEval = 0;
+    this.turn     = 0;
+    this.player   = this.design.currPlayer(this.turn);
 }
   
 Board.prototype.redoAction = function(action) {
@@ -112,15 +125,17 @@ Board.prototype.redoMove = function(move) {
     for (let i = 0; i < move.actions.length; i++) {
         this.redoAction(move.actions[i]);
     }
-    this.zLow ^= z_player_low[this.player];
-    this.zHigh ^= z_player_high[this.player];
+    if (this.player != 1) {
+        this.zLow ^= z_player_low[this.player];
+        this.zHigh ^= z_player_high[this.player];
+    }
     this.turn = this.design.nextTurn(this.turn);
     this.player = this.design.currPlayer(this.turn);
     this.baseEval = -this.baseEval;
-    this.zLow ^= z_player_low[this.player];
-    this.zHigh ^= z_player_high[this.player];
-    // TODO: Check Invariant and undo if necessary
-
+    if (this.player != 1) {
+        this.zLow ^= z_player_low[this.player];
+        this.zHigh ^= z_player_high[this.player];
+    }
     return true;
 }
 
@@ -138,9 +153,20 @@ Board.prototype.undoMove = function(move) {
     return true;
 }
 
-Board.prototype.clear = function() {
+Board.prototype.apply = function() {
     this.history  = [];
     this.captured = [];
+}
+
+Board.prototype.findPiece = function(player, type) {
+    const positions = this.design.allPositions();
+    for (let i = 1; i < positions.length; i++) {
+        const piece = this.getPiece(positions[i]);
+        if ((piece !== null) && (piece.type == type) && (piece.player == player)) {
+            return positions[i];
+        }
+    }
+    return null;
 }
 
 Board.prototype.isRepDraw = function() {
@@ -181,6 +207,27 @@ Board.prototype.getPiece = function(pos) {
   
 Board.prototype.setPiece = function(pos, piece) {
     this.pieces[pos] = piece;
+    this.zLow ^= z_low[pos][piece.type][piece.player];
+    this.zHigh ^= z_high[pos][piece.type][piece.player];
+    this.baseEval += (piece.player != 1) ? -this.design.price[piece.type] : this.design.price[piece.type];
+    if (this.design.adj) {
+        if (this.player != 1) {
+            const p = this.design.adj[0][pos - 1];
+            this.baseEval -= this.design.adj[piece.type][p];
+        } else {
+            this.baseEval += this.design.adj[piece.type][pos - 1];
+        }
+    }
+}
+
+Board.prototype.setTurn = function(turn) {
+    this.turn = turn;
+    this.player = this.design.currPlayer(turn);
+    if (this.player != 1) {
+        this.baseEval = -this.baseEval;
+        this.zLow ^= z_player_low[this.player];
+        this.zHigh ^= z_player_high[this.player];
+    }
 }
 
 module.exports.create = create;

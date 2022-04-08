@@ -1,5 +1,7 @@
 "use strict";
 
+const fen = "1pnbrqk";
+
 const pieceAdj = [
     [  63,   62,  61,  60,  59,  58,   57,   56, // Flip
        55,   54,  53,  52,  51,  50,   49,   48, 
@@ -65,13 +67,13 @@ const pieceAdj = [
       150,  250,  75,  -25,  -25,  75, 250, 150
     ]];
     
-let step = function(ctx, params) {
+const step = function(ctx, params) {
     if (ctx.go(params, 0) && !ctx.isFriend()) {
         ctx.end();
     }
 }
 
-let pawnShift = function(ctx, params) {
+const pawnShift = function(ctx, params) {
     if (ctx.go(params, 0) && ctx.isEmpty()) {
         if (ctx.inZone(0)) {
             ctx.promote(5);
@@ -80,7 +82,7 @@ let pawnShift = function(ctx, params) {
     }
 }
 
-let pawnLeap = function(ctx, params) {
+const pawnLeap = function(ctx, params) {
     if (ctx.go(params, 0) && ctx.isEnemy()) {
         if (ctx.inZone(0)) {
             ctx.promote(5);
@@ -89,7 +91,7 @@ let pawnLeap = function(ctx, params) {
     }
 }
 
-let pawnJump = function(ctx, params) {
+const pawnJump = function(ctx, params) {
     if (ctx.go(params, 0) && 
         ctx.isEmpty() && 
         ctx.inZone(1) && 
@@ -99,7 +101,7 @@ let pawnJump = function(ctx, params) {
     }
 }
 
-let enPassant = function(ctx, params) {
+const enPassant = function(ctx, params) {
     if (ctx.go(params, 0) &&
         ctx.isEnemy() &&
         ctx.isPiece(0)) {
@@ -114,7 +116,7 @@ let enPassant = function(ctx, params) {
     }
 }
 
-let jump = function(ctx, params) {
+const jump = function(ctx, params) {
     if (ctx.go(params, 0) && 
         ctx.go(params, 1) && 
        !ctx.isFriend()) {
@@ -122,7 +124,7 @@ let jump = function(ctx, params) {
     }
 }
 
-let slide = function(ctx, params) {
+const slide = function(ctx, params) {
     while (ctx.go(params, 0)) {
         if (ctx.isFriend()) break;
         ctx.end();
@@ -130,7 +132,7 @@ let slide = function(ctx, params) {
     }
 }
 
-let O_O = function(ctx, params) {
+const O_O = function(ctx, params) {
     if (ctx.go(params, 0) &&
         ctx.isEmpty() &&
         ctx.go(params, 0) &&
@@ -148,7 +150,7 @@ let O_O = function(ctx, params) {
     }
 }
 
-let O_O_O = function(ctx, params) {
+const O_O_O = function(ctx, params) {
     if (ctx.go(params, 0) &&
         ctx.isEmpty() &&
         ctx.go(params, 0) &&
@@ -168,6 +170,103 @@ let O_O_O = function(ctx, params) {
         }
     }
 }
+
+const checkAttrs = function(board, list) {
+    if (list.length != 2) return true;
+    for (let i = 0; i < list.length; i++) {
+        const piece = board.getPiece(list[i]);
+        if (piece !== null) {
+            if (piece.getValue(0) !== null) return false;
+        }
+    }
+    return true;
+}
+
+const setAttrs = function(board, move, list) {
+    for (let i = 0; i < list.length; i++) {
+        for (let j = 0; j < move.actions.length; j++) {
+            if (move.actions[j].to == list[i]) {
+                const piece = board.getPiece(list[i]);
+                if (piece !== null) move.actions[j].piece = piece.setValue(0, true);
+            }
+        }
+    }
+}
+
+const checkDirection = function(design, board, player, pos, dir, leapers, riders) {
+    let p = design.navigate(player, pos, dir);
+    if (p === null) return false;
+    let piece = board.getPiece(p);
+    if (piece !== null) {
+        if (piece.player == player) return false;
+        return (_.indexOf(leapers, +piece.type) >= 0) || (_.indexOf(riders, +piece.type) >= 0);
+    }
+    while (piece === null) {
+        p = design.navigate(player, p, dir);
+        if (p === null) return false;
+        piece = board.getPiece(p);
+    }
+    if (piece.player == player) return false;
+    return _.indexOf(riders, +piece.type) >= 0;
+  }
+
+const checkLeap = function(design, board, player, pos, o, d, knight) {
+    let p = design.navigate(player, pos, o);
+    if (p === null) return false;
+    p = design.navigate(player, p, d);
+    if (p === null) return false;
+    let piece = board.getPiece(p);
+    if (piece === null) return false;
+    return (piece.player != player) && (piece.type == knight);
+  }
+
+const checkPositions = function(design, board, player, positions) {
+    for (let i = 0; i < positions.length; i++) {
+        const pos = positions[i];
+        if (checkDirection(design, board, player, pos, 0,  [6], [4, 5])) return false;
+        if (checkDirection(design, board, player, pos, 1,  [6], [4, 5])) return false;
+        if (checkDirection(design, board, player, pos, 2,  [6], [4, 5])) return false;
+        if (checkDirection(design, board, player, pos, 3,  [6], [4, 5])) return false;
+        if (checkDirection(design, board, player, pos, 4,  [1, 6], [3, 5])) return false;
+        if (checkDirection(design, board, player, pos, 5,  [1, 6], [3, 5])) return false;
+        if (checkDirection(design, board, player, pos, 6,  [6], [3, 5])) return false;
+        if (checkDirection(design, board, player, pos, 7,  [6], [3, 5])) return false;
+        if (checkLeap(design, board, player, pos, 0, 4, 2)) return false;
+        if (checkLeap(design, board, player, pos, 0, 5, 2)) return false;
+        if (checkLeap(design, board, player, pos, 3, 6, 2)) return false;
+        if (checkLeap(design, board, player, pos, 3, 7, 2)) return false;
+        if (checkLeap(design, board, player, pos, 1, 5, 2)) return false;
+        if (checkLeap(design, board, player, pos, 1, 7, 2)) return false;
+        if (checkLeap(design, board, player, pos, 2, 4, 2)) return false;
+        if (checkLeap(design, board, player, pos, 2, 6, 2)) return false;
+    }
+    return true;
+}
+
+const invariant = function(board, moves) {
+    let r = [];
+    const player = board.player;
+    _.each(moves, function(move) {
+        board.redoMove(move);
+        const king = board.findPiece(player, 6);
+        if (king !== null) {
+            let list = [king];
+            if (move.actions.length == 2) {
+                list.push(move.actions[1].to);
+            }
+            if (checkAttrs(board, list) &&
+                checkPositions(design, board, player, list)) {
+                setAttrs(board, move, list);
+                r.push(move);
+            }
+        }
+        board.undoMove(move);
+    });
+    return r;
+}
+
+// TODO: Goal
+// TODO: Promotion (check moveToString)
 
 function build(design) {
     design.setOption("smart-moves", "false");
@@ -244,19 +343,8 @@ function build(design) {
     design.addMove(6, O_O_O, [2, 1], 1);
 
     design.setAdj(pieceAdj);
-
-    design.setup("White", "Pawn", ["a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2"]);
-    design.setup("White", "Rook", ["a1", "h1"]);
-    design.setup("White", "Knight", ["b1", "g1"]);
-    design.setup("White", "Bishop", ["c1", "f1"]);
-    design.setup("White", "Queen", ["d1"]);
-    design.setup("White", "King", ["e1"]);
-    design.setup("Black", "Pawn", ["a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7"]);
-    design.setup("Black", "Rook", ["a8", "h8"]);
-    design.setup("Black", "Knight", ["b8", "g8"]);
-    design.setup("Black", "Bishop", ["c8", "f8"]);
-    design.setup("Black", "Queen", ["d8"]);
-    design.setup("Black", "King", ["e8"]);
+    design.addInvariant(invariant);
+    design.setup(8, 8, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", fen);
 }
 
 module.exports.build = build;

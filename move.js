@@ -20,7 +20,7 @@ function MoveContext(design, board, pos, piece) {
 }
   
 MoveContext.prototype.copy = function() {
-    var r = new MoveContext(this.design, this.board, this.pos, this.piece);
+    let r = new MoveContext(this.design, this.board, this.pos, this.piece);
     r.parent = this;
     r.part   = this.part + 1;
     r.move   = this.move.copy();
@@ -36,7 +36,7 @@ MoveContext.prototype.setPiece = function(pos, piece) {
 }
   
 MoveContext.prototype.getPiece = function(pos) {
-    for (var i = 0; i < this.changes.length; i++) {
+    for (let i = 0; i < this.changes.length; i++) {
         if (this.changes[i].p == pos) return this.changes[i].x;
     }
     if (this.parent !== null) {
@@ -84,26 +84,26 @@ MoveContext.prototype.getParam = function(params, ix) {
 }
 
 MoveContext.prototype.go = function(params, ix) {
-    var dir = this.getParam(params, ix);
+    const dir = this.getParam(params, ix);
     if (dir === null) return false;
-    var player = this.board.player;
+    let player = this.board.player;
     if (!_.isUndefined(this.hand)) {
         player = this.hand.piece.player;
     }
-    var p = this.design.navigate(player, this.pos, dir);
+    const p = this.design.navigate(player, this.pos, dir);
     if (p === null) return false;
     this.pos = p;
     return true;
 }
   
 MoveContext.prototype.opposite = function(params, ix) {
-    var dir = this.getParam(params, ix);
+    const dir = this.getParam(params, ix);
     if (dir === null) return null;
     return this.design.opposite(dir);
 }
 
 MoveContext.prototype.isLastFrom = function(params, ix) {
-    var pos = this.getParam(params, ix);
+    let pos = this.getParam(params, ix);
     if (pos === null) {
         pos = this.pos;
     }
@@ -114,7 +114,7 @@ MoveContext.prototype.isLastFrom = function(params, ix) {
 }
 
 MoveContext.prototype.isLastTo = function(params, ix) {
-    var pos = this.getParam(params, ix);
+    let pos = this.getParam(params, ix);
     if (pos === null) {
         pos = this.pos;
     }
@@ -129,31 +129,31 @@ MoveContext.prototype.isEmpty = function() {
 }
   
 MoveContext.prototype.isEnemy = function() {
-    var piece = this.getPiece(this.pos);
+    const piece = this.getPiece(this.pos);
     if (!piece) return false;
     return piece.player != this.board.player;
 }
   
 MoveContext.prototype.isFriend = function() {
-    var piece = this.getPiece(this.pos);
+    const piece = this.getPiece(this.pos);
     if (!piece) return false;
     return piece.player == this.board.player;
 }
   
 MoveContext.prototype.isPiece = function(params, ix) {
-    var t = this.getParam(params, ix);
+    const t = this.getParam(params, ix);
     if (t === null) {
         return !this.isEmpty();
     }
-    var piece = this.getPiece(this.pos);
+    const piece = this.getPiece(this.pos);
     if (piece === null) return false;
     return piece.type == t;
 }
 
 MoveContext.prototype.inZone = function(params, ix) {
-    var zone = this.getParam(params, ix);
+    const zone = this.getParam(params, ix);
     if (zone === null) return null;
-    var player = this.board.player;
+    let player = this.board.player;
     if (!_.isUndefined(this.hand)) {
         player = this.hand.piece.player;
     }
@@ -162,7 +162,7 @@ MoveContext.prototype.inZone = function(params, ix) {
   
 MoveContext.prototype.promote = function(params, ix) {
     if (_.isUndefined(this.hand)) return false;
-    var type = this.getParam(params, ix);
+    const type = this.getParam(params, ix);
     if (type === null) return false;
     this.hand.piece = this.hand.piece.promote(type);
     return true;
@@ -174,12 +174,12 @@ MoveContext.prototype.capture = function() {
 }
   
 MoveContext.prototype.end = function(params, ix) {
-    var hand = this.hand;
+    const hand = this.hand;
     this.put();
     this.mode = this.getParam(params, ix);
     if (this.succeed) {
         if (this.mode !== null) {
-            var ctx = this.copy();
+            const ctx = this.copy();
             this.board.forks.push(ctx);
         } else {
             this.board.moves.push(this.move);
@@ -199,7 +199,7 @@ function Move(mode) {
 }
 
 Move.prototype.copy = function() {
-    var r = new Move(this.mode);
+    let r = new Move(this.mode);
     _.each(this.actions, function(a) {
         r.actions.push(a);
     });
@@ -207,7 +207,7 @@ Move.prototype.copy = function() {
 }
   
 Move.prototype.clone = function(part) {
-    var r = new Move(this.mode);
+    let r = new Move(this.mode);
     _.each(this.actions, function(a) {
         if (a.from && a.to && (a.part == part)) return;
         r.actions.push(a);
@@ -216,9 +216,9 @@ Move.prototype.clone = function(part) {
 }
 
 Move.prototype.moveToString = function(design) {
-    var r = ""; var p = null;
-    for (var i = 0; i < this.actions.length; i++) {
-         var a = this.actions[i];
+    let r = ""; let p = null;
+    for (let i = 0; i < this.actions.length; i++) {
+        const a = this.actions[i];
          if (a.from && a.to) {
              if ((p === null) || (p != a.from)) {
                   if (r != "") r = r + " ";
