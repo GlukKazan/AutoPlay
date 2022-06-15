@@ -57,7 +57,7 @@ Design.prototype.addInvariant = function(fun) {
     const call = this.invariant;
     this.invariant = function(board, moves) {
         const modified_moves = fun(board, moves);
-        return call(board, moves);
+        return call(board, modified_moves);
     }
 }
 
