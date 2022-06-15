@@ -56,7 +56,7 @@ Design.prototype.getMoves = function(board) {
 Design.prototype.addInvariant = function(fun) {
     const call = this.invariant;
     this.invariant = function(board, moves) {
-        const moves = fun(board, moves);
+        const modified_moves = fun(board, moves);
         return call(board, moves);
     }
 }
@@ -229,7 +229,7 @@ Design.prototype.addPosition = function(name, dirs) {
  }
 
 Design.prototype.addZone = function(name, player, positions) {
-    const zone = _.indexOf(this.zoneNames, name);
+    let zone = _.indexOf(this.zoneNames, name);
     if (zone < 0) {
         zone = this.zoneNames.length;
         this.zoneNames.push(name);
